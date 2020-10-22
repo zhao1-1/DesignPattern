@@ -1,0 +1,156 @@
+### （7）桥接模式
+
++ 定义：
+
+  > 也叫桥梁模式，Bridge Design Pattern。
+  >
+  > Gof《设计模式》：将抽象和实现解耦，让它们可以独立变化。
+  >
+  > 通俗解释：一个类存在两个（或多个）独立变化的维度，我们通过组合的方式，让这两个（或多个）维度可以独立进行扩展。通过组合关系来替代继承关系，避免继承层次的指数级爆炸，也符合组合优于继承原则。
+
++ 应用于JDBC：
+
+  
+
++ 实现：
+
+  ```markdown
+  # 未使用桥接模式前：
+  可能出现类的爆炸
+  ```
+
+  ```java
+  public interface ICoffee {
+      void orderCoffee(int count);
+  }
+  ```
+
+  ```java
+  public class LargeCoffeeOriginal implements ICoffee {
+      @Override
+      public void orderCoffee(int count) {
+          System.out.println("大杯原味咖啡：" + count + "杯");
+      }
+  }
+  
+  public class SmallCoffeeOriginal implements ICoffee {
+      @Override
+      public void orderCoffee(int count) {
+          System.out.println("小杯原味咖啡：" + count + "杯");
+      }
+  }
+  
+  public class MiddleCoffeeWithSugar implements ICoffee {
+      @Override
+      public void orderCoffee(int count) {
+          System.out.println("中杯咖啡加糖：" + count + "杯");
+      }
+  }
+  
+  。。。。。。
+  ```
+
+  
+
+  ```markdown
+  # 使用桥接模式进行改造：
+  两个变化维度：
+  - 抽象化 -> 咖啡的容量（杯型）：包括超大杯、大杯、中杯、小杯、秘密杯、女神杯。。。
+  - 具体化 -> 口味（个性化）：加糖、加奶、加shot、少糖、加榛果糖浆。。。。
+  ```
+
+  ```java
+  // 1.1 创建抽象化部分
+  public abstract class Coffee {
+      protected ICoffeeAdditives add;
+      public Coffee(ICoffeeAdditives add) {
+          this.add = add;
+      }
+      
+      public abstract void orderCoffee(int count);
+  }
+  
+  // 1.2 对抽象化修正
+  public abstract class RefinedCoffee extends Coffee {
+      public RefinedCoffee(ICoffeeAdditives add) {
+          super(add);
+      }
+      
+      // 增加一个品控的方法
+      public void checkQuality() {
+          System.out.println("检查合不合格。。。");
+      }
+  }
+  
+  // 1.3 抽象化实现
+  //（1）大杯
+  public class LargeCoffee extends RefinedCoffee {
+      public LargeCoffee(ICoffeeAdditives add) {
+          super(add);
+      }
+      
+      @Override
+      public void orderCoffee(int count) {
+          System.out.println("大杯咖啡" + count + "杯，个性化定制是：" + add.getClass().getSimpleName());
+      }
+  }
+  //（2）中杯
+  public class MiddleCoffee extends RefinedCoffee {
+      public MiddleCoffee(ICoffeeAdditives add) {
+          super(add);
+      }
+      
+      @Override
+      public void orderCoffee(int count) {
+          System.out.println("中杯咖啡" + count + "杯，个性化定制是：" + add.getClass().getSimpleName());
+      }
+  }
+  //（3）。。。。。。
+  ```
+
+  ```java
+  // 2. 创建实现化（具体）部分
+  public interface ICoffeeAdditives {
+      void addSomething();
+  }
+  
+  //（1）加奶
+  public class Milk implements ICoffeeAdditives {
+      @Override
+      public void addSomething() {
+          System.out.println("加奶");
+      }
+  }
+  //（2）加糖
+  public class Sugar implements ICoffeeAdditives {
+      @Override
+      public void addSomething() {
+          System.out.println("加糖");
+      }
+  }
+  //（3）加shot
+  public class Shot implements ICoffeeAdditives {
+      @Override
+      public void addSomething() {
+          System.out.println("加一份浓缩");
+      }
+  }
+  //（4）。。。。。。
+  ```
+
+  ```java
+  // 3. 客户端调用
+  public static void main(String[] args) {
+      //（1）点两杯加奶的大杯咖啡
+      RefinedCoffee largeWithMilk = new LargeCoffee(new Milk());
+      largeWithMilk.orderCoffee(2);
+      largeWithMilk.checkQuality();
+      //（2）点5杯加蜂蜜的小杯咖啡
+      RefinedCoffee SmallWithBee = new SmallCoffee(new Bee());
+      SmallWithBee.orderCoffee(5);
+      SmallWithBee.checkQuality();
+  }
+  ```
+
+  
+
