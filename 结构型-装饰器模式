@@ -1,0 +1,170 @@
+
+
+### （8）装饰器模式
+
++ 对象增强的常用方式：
+
+  1. 继承
+  2. 装饰器模式
+  3. 代理模式
+
++ 特色：
+
+  + 优点：
+    + 装饰类和被装饰类是可以**独立**的，低耦合的。互相都不用知道对方的存在；
+    + 装饰模式是继承的一种**替代**方案，**无论包装多少层，返回的对象都是is-a的关系**(上面的例子：包装完还是Phone类型)；
+    + 实现动态扩展，只要**继承了装饰器**就可以**动态**扩展想要的功能了。
+  + 缺点：
+    + 实现动态扩展，只要**继承了装饰器**就可以**动态**扩展想要的功能了。
+
++ 实现：
+
+  ```markdown
+  # 没有采用装饰器模式
+  ```
+
+  ```java
+  // 原始功能
+  public class Phone {
+      public void call() {
+          System.out.println("--打电话功能--");
+      }
+  }
+  ```
+
+  ```java
+  //（1）新增一个功能：打电话之前能听彩铃
+  public class MusicPhone extends Phone {   
+      // 听彩铃
+      public void listenMusic() {
+          System.out.println("我怀念的是无话不说,我怀念的是一起做梦~~~~~~");
+      }
+      @Override
+      public void call() {
+          listenMusic();	// 在打电话之前听彩铃
+          super.call();
+      }
+  }
+  //（2）变更需求：听完电话之后告诉我一下当前的时间
+  public class GiveCurrentTimePhone extends MusicPhone {
+      // 给出当前的时间
+      public void currentTime() {
+          System.out.println("当前的时间是：" + System.currentTimeMillis());
+      }
+      @Override
+      public void call() {
+          super.call();
+          currentTime();	// 打完电话提示现在的时间是多少啦
+      }
+  }
+  //（3）又要变更需求：我不想听彩铃了，只想听完电话通知一下时间就好了........(可是我们的通知时间电话类是继承在听彩铃的电话类基础之上的),,,
+  
+  //（4）。。。。。。
+  
+  					无求无尽的新增类（类爆炸），且时分局限，不够灵活！！
+  ```
+
+  
+
+  ```markdown
+  # 利用装饰器模式对代码重构
+  ```
+
+  ```java
+  // 1. 主接口
+  public interface Phone {
+      void call();
+  }
+  ```
+
+  ```java
+  // 2. 具体实现
+  public class IphoneX implements Phone {
+      @Override
+      public void call() {
+          System.out.println("--打电话功能执行--");
+      }
+  }
+  ```
+
+  ```java
+  // 3. 定义装饰器（抽象类）
+  public abstract class PhoneDecorate implements Phone {
+      // 以组合的方式来获取默认实现类
+      private Phone p;
+      public PhoneDecorate(Phone p) {
+          this.p = p;
+      }
+      
+      @Override
+      public void call() {
+          p.call();
+      }
+  }
+  ```
+
+  ```java
+  // 4. 继承装饰器来扩展功能
+  
+  // 功能一：打电话之前听音乐
+  public class MusicPhone extends PhoneDecorate {
+      //（1）构造函数
+      public MusicPhone(Phone p) {
+          super(p);
+      }
+      
+      //（2）定义要扩展的功能（音乐播放）
+      public void listenMusic() {
+          System.out.println("。。音乐播放功能（彩铃）。。");
+      }
+      
+      //（3）重写要增强的方法（打电话方法）
+      @Override
+      public void call() {
+          listenMusic();
+          super.call();
+      }
+  }
+  // 功能二：打完电话后获得当前时间
+  public class GiveCurrentTimePhone extends PhoneDecorate {
+      //（1）构造函数
+      public GiveCurrentTimePhone(Phone p) {
+          super(p);
+      }
+      
+      //（2）定义要扩展的功能（获得当前时间）
+      public void currentTime() {
+          System.out.println("当前时间是：" + System.currentTimeMillis());
+      }
+      
+      //（3）重写要增强的方法（打电话方法）
+      @Override
+      public void call() {
+          super.call();
+          currentTime();
+      }
+  }
+  ```
+
+  ```java
+  // 5. 客户端调用
+  public static void main(String[] args) {
+      /*
+      Phone p = new IphoneX();
+      p = new MusicPhone(p);
+      p = new GiveCurrentTimePhone(p);
+      */
+      Phone p = new GiveCurrentTimePhone(new MusicPhone(new IphoneX()));
+      p.call();
+  }
+  
+  /*
+  输出：
+  。。音乐播放功能（彩铃）。。
+  --打电话功能执行--
+  当前时间是：1525742740068
+  */
+  ```
+
+
+
