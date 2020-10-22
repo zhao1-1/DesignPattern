@@ -1,0 +1,312 @@
+### （4）建造者模式
+
++ 定义：
+
+  > Builder模式，建造者或构建者模式，或生成器模式。
+  >
+  > **用以分离复杂对象的构建和表示。**
+  >
+  > 同样的构建过程可以创建不同的表示。
+
++ 应用场景：
+
+  如果一个类中有很多属性，为了避免构造函数的参数列表过长，影响代码的可读性和易用性，我们可以通过构造函数配合 set() 方法来解决。但是，如果存在下面情况中的任意一种，我们就要考虑使用建造者模式了。
+
+  + 我们把类的必填属性放到构造函数中，强制创建对象的时候就设置。如果必填的属性有很多，把这些必填属性都放到构造函数中设置，那构造函数就又会出现参数列表很长的问题。如果我们把必填属性通过 set() 方法设置，那校验这些必填属性是否已经填写的逻辑就无处安放了。
+  + 如果类的属性之间有一定的依赖关系或者约束条件，我们继续使用构造函数配合 set() 方法的设计思路，那这些依赖关系或约束条件的校验逻辑就无处安放了。
+  + 如果我们希望创建不可变对象，也就是说，对象在创建好之后，就不能再修改内部的属性值，要实现这个功能，我们就不能在类中暴露 set() 方法。构造函数配合 set() 方法来设置属性值的方式就不适用了。
+
++ 工厂模式与建造者模式的区别：
+
+  > 顾客走进一家餐馆点餐，我们利用工厂模式，根据用户不同的选择，来制作不同的食物，比如披萨、汉堡、沙拉。
+  >
+  > 对于披萨来说，用户又有各种配料可以定制，比如奶酪、西红柿、起司，我们通过建造者模式根据用户选择的不同配料来制作披萨。
+
+  + 工厂模式是用来创建不同但是相关类型的对象（继承同一父类或者接口的一组子类），由给定的参数来决定创建哪种类型的对象。
+  + 建造者模式是用来创建一种类型的复杂对象，可以通过设置不同的可选参数，“定制化”地创建不同的对象。
+
++ 实现方式：
+
+  + 实例一：
+
+    ```java
+    class Location {
+        String street;
+        String roomNo;
+        
+        public Location(String street, String roomNo) {
+            this.street = street;
+            this.roomNo = roomNo;
+        }
+    }
+    
+    public class Person {
+        int id;
+        String name;
+        int age;
+        double weight;
+        int score;
+        Location loc;
+        
+        // 构造函数用private修饰，外部无法用new构建Person对象
+        private Person() {}
+        
+        // 定义内部静态类（生成器），只用来构建Person对象
+        public static class PersonBuilder {
+            Person p = new Person();
+            
+            // 为了适用链式编程，构造函数依然返回自己。
+            public PersonBuilder basicInfo(int id, String name, int age) {
+                p.id = id;
+                p.name = name;
+                p.age = age;
+                return this;
+            }
+            public PersounBuilder weight(double weight) {
+                p.weight = weight;
+                return this;
+            } 
+            public PersonBuilder score(int score) {
+                p.score = score;
+                return this;
+            }
+            public PersonBuilder loc(String street, String rooNo) {
+                p.loc = new Location(street, roomNo);
+                return this;
+            }
+            public Person build() {return p;}
+        }
+    }
+    ```
+
+    ```java
+    public class Main {
+        public static void main(String[] args) {
+        Person p = new Person.PersonBuilder()
+                .basicInfo(1, "zhangsan", 18)
+                .score(20)
+                .weight(200)
+                .loc("bj", "23")
+                .build();
+        }
+    }
+    ```
+
+  + 实例二：
+
+    ```java
+    package com.zb..test.builder;
+    // 地形类
+    public class Terrain {
+        Wall w;		// 墙
+        Fort f;		// 暗堡
+        Mine m;		// 地雷
+    }
+    
+    class Wall {
+        int x, y, w, h;   
+        public Wall(int x, int y, int w, int h) {
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+    }
+    
+    class Fort {
+        int x, y, w, h;   
+        public Fort(int x, int y, int w, int h) {
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+    }
+    
+    class Mine {
+        int x, y, w, h;   
+        public Mine(int x, int y, int w, int h) {
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+    }
+    ```
+
+    ```java
+    package com.zb..test.builder;
+    
+    public interface TerrainBuilder {
+        TerrainBuilder buildWall();
+        TerrainBuilder buildFort();
+        TerrainBuilder buildMine();
+        Terrain build();
+    }
+    ```
+
+    ```java
+    package com.zb..test.builder;
+    
+    public class ComplexTerrainBuilder implements TerrainBuilder {
+        Terrain terrain = new Terrain();
+    
+        @Override
+        public TerrainBuilder buildWall(int x, int y, int w, int h) {
+            terrain.w = new Wall(x, y, w, h);
+            return this;
+        }
+    
+        @Override
+        public TerrainBuilder buildFort(int x, int y, int w, int h) {
+            terrain.f = new Fort(x, y, w, h);
+            return this;
+        }
+    
+        @Override
+        public TerrainBuilder buildMine(int x, int y, int w, int h) {
+            terrain.m = new Mine(x, y, w, h);
+            return this;
+        }
+    
+        @Override
+        public Terrain build() { return terrain; }
+    }
+    ```
+
+    ```java
+    package com.zb..test.builder;
+    
+    public class SimpleTerrainBuilder implements TerrainBuilder {
+        Terrain terrain = new Terrain();
+    
+        @Override
+        public TerrainBuilder buildWall() {
+            terrain.w = new Wall(10, 10, 50, 50);
+            return this;
+        }
+    
+        @Override
+        public TerrainBuilder buildFort() {
+            terrain.f = new Fort(10, 10, 50, 50);
+            return this;
+        }
+    
+        @Override
+        public TerrainBuilder buildMine() {
+            terrain.m = new Mine(10, 10, 50, 50);
+            return this;
+        }
+    
+        @Override
+        public Terrain build() { return terrain; }
+    }
+    ```
+
+    ```java
+    package com.zb..test.builder;
+    
+    public class Main {
+        public static void main(String[] args) {
+            TerrainBuilder builder = new SimpleTerrainBuilder();
+            Terrain t = builder.buildFort().buildMin().buildWall().build();
+        }
+    }
+    ```
+
+  + 实例三：
+
+    ```java
+    public class ResourcePoolConfig {
+        private String name;
+      private int maxTotal;
+        private int maxIdle;
+        private int minIdle;
+        
+        // 构造函数用private修饰，外部类不能通过new创建对象
+        private ResourcePoolConfig(Builder builder) {
+            this.name = builder.name;
+            this.maxTotal = builder.maxTotal;
+            this.maxIdle = builder.maxIdle;
+            this.minIdle = builder.minIdle;
+        }
+        
+        // 省略getter方法。。。
+        
+        // 定义内部静态类用作构建器
+        /*
+        	(a) 我们将Builder类设计成了ResourcePoolConfig的内部类。
+        	(b) 也可以将Builder类设计成独立的非内部类ResourcePoolConfigBuilder。
+        */
+        public static class Builder {
+            private static final int DEFAULT_MAX_TOTAL = 8;
+            private static final int DEFAULT_MAX_IDLE = 8;
+            private static final int DEFAULT_MIN_IDLE = 0;
+            
+            private String name;
+            private int maxTotal = DEFAULT_MAX_TOTAL;
+            private int maxIdle = DEFAULT_MAX_IDLE;
+            private int minIdle = DEFAULT_MIN_IDLE;
+            
+            public Builder setName(String name) {
+                if (StringUtils.isBlank(name)) {
+                    throw new IllegalArgumentException(".....");
+                }
+                this.name = name;
+                return this;
+            }     
+            public Builder setMaxTotal(int maxTotal) {
+                if (maxTotal <= 0) {
+                    throw new IllegalArgumentException("...");
+                }
+                this.maxTotal = maxTotal;
+                return this;
+            }        
+            public Builder setMaxIdle(int maxIdle) {
+                if (maxIdle < 0) {
+                    throw new IllegalArgumentException("...");
+                }
+                this.maxIdle = maxIdle;
+                return this;
+            }
+            public Builder setMinIdle(int minIdle) {
+                if (minIdle < 0) {
+                    throw new IllegalArgumentException("...");
+                }
+                this.minIdle = minIdle;
+                return this;
+            }
+            
+            
+            public ResourcePoolConfig build() {
+                // 校验逻辑
+                if (StringUtils.isBlank(name)) {
+                    throw new IllegalArgumentException(".....");
+                }
+                if (maxIdle > maxTotal) {
+                    throw new IllegalArgumentException(".....");
+                }
+                if (minIdle > maxTotal  ||  minIdle > maxIdle) {
+                    throw new IllegalArgumentException(".....");
+                }          
+                return new ResourcePoolConfig(this);
+            }
+        }
+    }
+    ```
+
+    ```java
+    public class Main {
+        public static void main(String[] args) {
+          // 这段代码会抛出IllegalArgumentException，因为minIdle>maxIdle
+            ResourcePoolConfig config = new ResourcePoolConfig.Builder()
+                .setName("dbconnectionpool")
+                .setMaxTotal(16)
+                .setMaxIdle(10)
+                .setMinIdle(12)
+                .build()
+        }
+    }
+    ```
+
+    
